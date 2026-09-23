@@ -29,7 +29,7 @@ end
 function Database:ResolveFromBackpack(backpack)
     if not backpack then return nil end
     local names={}
-    for _,item in ipairs(backpack:GetChildren()) do table.insert(names,self:Normalize(item.Name)) end
+    for _,item in ipairs(backpack:GetChildren()) do names[#names + 1] = self:Normalize(item.Name) end
     local priority={
         {"hero hunter: cosmic","cosmic"},{"hero hunter: monst","monst","monster"},{"destructive cyborg","cyborg"},
         {"deadly ninja","ninja"},{"brutal demon","demon"},{"blade master","blade"},{"wild psychic","psychic"},
