@@ -3,22 +3,16 @@ local Config = {}
 
 Config.Project = {
     Name = "Impact+",
-    Version = "2.0.0-fixed",
+    Version = "2.1.0-fixed",
     Repository = "https://github.com/ItsNullion/IMPACT-",
-    RawRepository = "https://raw.githubusercontent.com/ItsNullion/IMPACT-/main",
+    -- The repository's production files live under the Impact+ directory.
+    RawRepository = "https://raw.githubusercontent.com/ItsNullion/IMPACT-/main/Impact%2B",
 }
 
 Config.Paths = {
     Root = "Impact+",
-    Sounds = "Sounds",
-    Music = "Music",
-    Images = "Images",
-    Particles = "Particles",
-    Config = "Config",
-    Logs = "Logs",
-    Data = "Data",
-    Modules = "Modules",
-    Effects = "Effects",
+    Sounds = "Sounds", Music = "Music", Images = "Images", Particles = "Particles",
+    Config = "Config", Logs = "Logs", Data = "Data", Modules = "Modules", Effects = "Effects",
 }
 
 Config.GitHub = {
@@ -27,7 +21,7 @@ Config.GitHub = {
     Music = "Assets/Music",
     Images = "Assets/Images",
     Particles = "Assets/Particles",
-    Effects = "Impact+/Effects",
+    Effects = "Effects",
 }
 
 Config.Settings = {
@@ -62,7 +56,7 @@ Config.Features = {
 }
 
 Config.Assets = {
-    Sounds={Narrator="Narrator.mp3",EquipWhoosh="EquipWhoosh.mp3",Critical="Critical.mp3",Normal="Normal.mp3",Finisher="Finisher.mp3"},
+    Sounds={Sounds="Sounds", Narrator="Narrator.mp3", EquipWhoosh="EquipWhoosh.mp3", Critical="Critical.mp3", Normal="Normal.mp3", Finisher="Finisher.mp3"},
     Music={Kokusen="KOKUSEENNN!!.mp3"},
     Images={Logo="Logo.png",Orb="Orb.png",SettingsButton="dje079e-d810008d-670a-49a3-9c8e-2ef45bf3fe44.png"},
     Particles={CursedEnergy="CursedEnergy.rbxm",Shockwave="Shockwave.rbxm",Finishers="Finishers.rbxm"},
@@ -78,17 +72,14 @@ Config.Runtime = { HitDistance=Config.Settings.Gameplay.HitDistance }
 
 function Config:GetModuleURL(name)
     name = tostring(name):gsub("%.lua$", "") .. ".lua"
-    return self.Project.RawRepository .. "/" .. self.GitHub.Modules .. "/" .. name
+    return self.Project.RawRepository .. "/Modules/" .. name
 end
-
 function Config:GetAssetURL(folder, asset)
     return self.Project.RawRepository .. "/Assets/" .. tostring(folder) .. "/" .. tostring(asset)
 end
-
 function Config:GetEffectURL(name)
-    return self.Project.RawRepository .. "/" .. self.GitHub.Effects .. "/" .. tostring(name):gsub("%.lua$", "") .. ".lua"
+    return self.Project.RawRepository .. "/Effects/" .. tostring(name):gsub("%.lua$", "") .. ".lua"
 end
-
 function Config:GetAssetPath(folder, asset)
     return self.Paths.Root .. "/" .. tostring(folder) .. "/" .. tostring(asset)
 end

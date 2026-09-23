@@ -30,12 +30,11 @@ Database.Moves = {
 }
 
 function Database:Normalize(value)
-    return tostring(value or ""):lower():gsub("_", " "):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
+    return tostring(value or ""):lower():gsub("[%p_]", " "):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
 end
 
 function Database:Get(moveName)
     local n = self:Normalize(moveName)
-    if n == "" then return nil end
     if self.Moves[n] then return self.Moves[n] end
     for key, data in pairs(self.Moves) do
         if n:find(key, 1, true) or key:find(n, 1, true) then return data end

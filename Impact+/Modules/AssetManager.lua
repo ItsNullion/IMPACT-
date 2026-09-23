@@ -1,71 +1,80 @@
--- Impact+ AssetManager - strict cache/download layer
+--==============================================================--
+-- Impact+
+-- AssetManager.lua
+--
+-- Version: 1.0.0
+--
+-- Changelog:
+-- 1.0.0 - Initial version
+--==============================================================--
 local AssetManager = {}
 
-local function fsOK()
-    return type(isfile)=="function" and type(readfile)=="function" and type(writefile)=="function" and type(isfolder)=="function" and type(makefolder)=="function"
+local function canFS()
+    return type(isfile) == "function" and type(writefile) == "function" and type(makefolder) == "function"
 end
 
-local function ensure(path)
-    if not fsOK() then return false end
-    if not isfolder(path) then pcall(makefolder,path) end
-    return isfolder(path)
+local function ensureFolder(path)
+    if type(isfolder) ~= "function" or not isfolder(path) then
+        pcall(makefolder, path)
+    end
 end
 
 function AssetManager:Initialize(Config)
-    self.Config=Config
-    if not fsOK() then return false end
-    ensure(Config.Paths.Root)
-    for _,folder in ipairs({"Sounds","Music","Images","Particles","Config","Logs","Data","Modules","Effects"}) do ensure(Config.Paths.Root.."/"..folder) end
+    self.Config = Config
+    if not canFS() then
+        warn("[Impact+] Executor file APIs are unavailable; local asset caching is disabled.")
+        return false
+    end
+    ensureFolder(Config.Paths.Root)
+    for _, path in pairs(Config.Paths) do
+        if type(path) == "string" and path ~= Config.Paths.Root then
+            ensureFolder(Config.Paths.Root .. "/" .. path)
+        end
+    end
     return true
 end
 
-function AssetManager:Download(url,path,force)
-    if not fsOK() then return false end
-    if not force and isfile(path) then return true end
-    local ok,body=pcall(function() return game:HttpGet(url) end)
-    if not ok or type(body)~="string" or #body==0 then warn("[Impact+] HTTP failed: "..url); return false end
-    local parent=path:match("^(.*)/[^/]+$")
-    if parent then ensure(parent) end
-    local wrote=pcall(writefile,path,body)
-    return wrote and isfile(path)
+function AssetManager:Download(url, localPath, force)
+    if not canFS() then return false end
+    if not force and isfile(localPath) then return true end
+    local ok, body = pcall(function() return game:HttpGet(url) end)
+    if not ok or type(body) ~= "string" or #body == 0 then
+        warn("[Impact+] Failed to download: " .. tostring(url))
+        return false
+    end
+    local wrote = pcall(writefile, localPath, body)
+    return wrote
 end
 
-function AssetManager:EnsureModule(name)
-    local file=tostring(name):gsub("%.lua$","")..".lua"
-    local path=self.Config.Paths.Root.."/Modules/"..file
-    return self:Download(self.Config:GetModuleURL(file),path) and path or nil
+function AssetManager:EnsureModule(moduleName)
+    local path = self.Config:GetAssetPath(self.Config.Paths.Modules, moduleName:gsub("%.lua$", "") .. ".lua")
+    local url = self.Config:GetModuleURL(moduleName)
+    if self:Download(url, path) then return path end
+    return nil
 end
 
-function AssetManager:EnsureEffect(name)
-    local file=tostring(name):gsub("%.lua$","")..".lua"
-    local path=self.Config.Paths.Root.."/Effects/"..file
-    return self:Download(self.Config:GetEffectURL(file),path) and path or nil
-end
-
-function AssetManager:EnsureAsset(folder,assetName)
-    local path=self.Config:GetAssetPath(folder,assetName)
-    local urlFolder=self.Config.GitHub[folder]
+function AssetManager:EnsureAsset(folder, assetName)
+    local localPath = self.Config:GetAssetPath(folder, assetName)
+    local urlFolder = self.Config.GitHub[folder]
+    if not urlFolder then
+        local map = {Sounds="Sounds", Music="Music", Images="Images", Particles="Particles"}
+        urlFolder = map[folder]
+    end
     if not urlFolder then return nil end
-    return self:Download(self.Config:GetAssetURL(urlFolder:gsub("^Assets/",""),assetName),path) and path or nil
+    if self:Download(self.Config:GetAssetURL(urlFolder:gsub("^Assets/", ""), assetName), localPath) then
+        return localPath
+    end
+    return nil
 end
 
-function AssetManager:LoadModule(name)
-    local path=self:EnsureModule(name)
-    if not path then return nil,"download failed" end
-    local ok,fn=pcall(loadstring,readfile(path),"@"..path)
-    if not ok or not fn then return nil,tostring(fn) end
-    local ran,result=pcall(fn)
-    if not ran then return nil,tostring(result) end
-    return result
-end
-
-function AssetManager:LoadEffect(name)
-    local path=self:EnsureEffect(name)
-    if not path then return nil,"download failed" end
-    local ok,fn=pcall(loadstring,readfile(path),"@"..path)
-    if not ok or not fn then return nil,tostring(fn) end
-    local ran,result=pcall(fn)
-    if not ran then return nil,tostring(result) end
+function AssetManager:LoadModule(moduleName)
+    local path = self:EnsureModule(moduleName)
+    if not path or type(readfile) ~= "function" or type(loadstring) ~= "function" then return nil end
+    local ok, result = pcall(function() return loadstring(readfile(path), "@" .. path)() end)
+    if not ok then
+        warn("[Impact+] Module load failed: " .. moduleName .. " -> " .. tostring(result))
+        return nil
+    end
     return result
 end
 
