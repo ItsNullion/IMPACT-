@@ -65,5 +65,7 @@ function UI:_build()
     UserInputService.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
 end
 
+end
+
 function UI:Cleanup() if self.Gui then self.Gui:Destroy(); self.Gui=nil end; self._toggle=nil end
 return UI
