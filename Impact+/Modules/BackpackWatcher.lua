@@ -9,12 +9,49 @@ function Watcher:_scan()
     local backpack=player and player:FindFirstChildOfClass("Backpack")
     local character=player and player.Character
     if not backpack then return end
-    local charData=self.CharacterDatabase and self.CharacterDatabase:ResolveFromBackpack(backpack)
-    if charData then self.CursedEnergy:SetCharacterColor(charData.Color) end
-    local equipped=character and character:FindFirstChildOfClass("Tool")
-    local item=equipped or backpack:FindFirstChildOfClass("Tool")
-    local move=item and self.MoveDatabase and self.MoveDatabase:Get(item.Name)
-    self.CursedEnergy:SetMoveColor(move and move.Color or nil)
+function Database:ResolveFromBackpack(backpack)
+    if not backpack then
+        return nil
+    end
+
+    local names = {}
+
+    for _, item in ipairs(backpack:GetChildren()) do
+        names[#names + 1] = self:Normalize(item.Name)
+    end
+
+    local priority = {
+        {"hero hunter: cosmic", "cosmic"},
+        {"hero hunter: monst", "monst", "monster"},
+        {"destructive cyborg", "cyborg"},
+        {"deadly ninja", "ninja"},
+        {"brutal demon", "demon"},
+        {"blade master", "blade"},
+        {"wild psychic", "psychic"},
+        {"martial artist", "martial"},
+        {"tech prodigy", "tech"},
+        {"undying hero", "undying"},
+        {"hero hunter", "hunter"},
+        {"saitama", "strongest", "normal punch"},
+        {"kj", "ravage"},
+        {"sorcerer", "infinity"},
+    }
+
+    for _, row in ipairs(priority) do
+        local key = self:Normalize(row[1])
+
+        for _, needle in ipairs(row) do
+            needle = self:Normalize(needle)
+
+            for _, itemName in ipairs(names) do
+                if itemName:find(needle, 1, true) then
+                    return self.Characters[key]
+                end
+            end
+        end
+    end
+
+    return nil
 end
 function Watcher:Start()
     if self.Started or not self.Config.Features.BackpackDetection then return end
