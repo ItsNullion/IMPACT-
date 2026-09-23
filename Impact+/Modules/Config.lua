@@ -75,7 +75,7 @@ function Config:GetModuleURL(name)
     return self.Project.RawRepository .. "/Modules/" .. name
 end
 function Config:GetAssetURL(folder, asset)
-    return self.Project.RawRepository .. "/Assets/" .. tostring(folder) .. "/" .. tostring(asset)
+    return "https://raw.githubusercontent.com/ItsNullion/IMPACT-/main/Impact%2B/Assets/" .. tostring(folder) .. "/" .. tostring(asset)
 end
 function Config:GetEffectURL(name)
     return self.Project.RawRepository .. "/Effects/" .. tostring(name):gsub("%.lua$", "") .. ".lua"
