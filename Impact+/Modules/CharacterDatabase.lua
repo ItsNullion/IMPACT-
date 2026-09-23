@@ -27,11 +27,12 @@ Database.Characters = {
 }
 
 function Database:Normalize(value)
-    return tostring(value or ""):lower():gsub("[%p_]", " "):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
+    return tostring(value or ""):lower():gsub("_", " "):gsub("%s+", " "):gsub("^%s*(.-)%s*$", "%1")
 end
 
 function Database:Get(name)
     local key = self:Normalize(name)
+    if key == "" then return nil end
     return self.Characters[key]
 end
 

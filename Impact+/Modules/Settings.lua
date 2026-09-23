@@ -1,26 +1,18 @@
---==============================================================--
--- Impact+
--- Settings.lua
---
--- Version: 1.0.0
---
--- Changelog:
--- 1.0.0 - Runtime settings state and persistence-ready API
---==============================================================--
 local Settings={}
 function Settings:Init(Config) self.Config=Config end
 function Settings:Get(path,default)
-    local node=self.Config.Settings
-    for part in string.gmatch(path,"[^%.]+") do node=node and node[part] end
-    if node==nil then return default end
-    return node
+    local node=self.Config and self.Config.Settings
+    for part in tostring(path):gmatch("[^%.]+") do node=node and node[part] end
+    return node==nil and default or node
 end
 function Settings:Set(path,value)
-    local node=self.Config.Settings; local parts={}
-    for part in string.gmatch(path,"[^%.]+") do table.insert(parts,part) end
-    for i=1,#parts-1 do node=node[parts[i]]; if not node then return false end end
+    local parts={}; for part in tostring(path):gmatch("[^%.]+") do parts[#parts+1]=part end
+    if #parts==0 then return false end
+    local node=self.Config.Settings
+    for i=1,#parts-1 do node=node and node[parts[i]]; if not node then return false end end
+    if not node then return false end
     node[parts[#parts]]=value
-    if path=="Gameplay.HitDistance" then self.Config.Runtime.HitDistance=value end
+    if path=="Gameplay.HitDistance" then self.Config.Runtime.HitDistance=math.max(1,tonumber(value) or 30) end
     return true
 end
 return Settings
