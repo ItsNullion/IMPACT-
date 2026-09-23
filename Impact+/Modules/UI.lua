@@ -60,12 +60,39 @@ function UI:_build()
     self._toggle=toggle
     open.Activated:Connect(toggle)
     local dragging=false; local dragStart; local startPos
-    panel.InputBegan:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=true; dragStart=input.Position; startPos=panel.Position end end)
-    UserInputService.InputChanged:Connect(function(input) if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then local delta=input.Position-dragStart; panel.Position=UDim2.new(startPos.X.Scale,startPos.X.Offset+delta.X,startPos.Y.Scale,startPos.Y.Offset+delta.Y) end end)
-    UserInputService.InputEnded:Connect(function(input) if input.UserInputType==Enum.UserInputType.MouseButton1 then dragging=false end end)
+    panel.InputBegan:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 then
+            dragging=true
+            dragStart=input.Position
+            startPos=panel.Position
+        end
+    end)
+
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and input.UserInputType==Enum.UserInputType.MouseMovement then
+            local delta=input.Position-dragStart
+            panel.Position=UDim2.new(
+                startPos.X.Scale,
+                startPos.X.Offset+delta.X,
+                startPos.Y.Scale,
+                startPos.Y.Offset+delta.Y
+            )
+        end
+    end)
+
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType==Enum.UserInputType.MouseButton1 then
+            dragging=false
+        end
+    end)
+end -- Closes UI:_build()
+
+function UI:Cleanup()
+    if self.Gui then
+        self.Gui:Destroy()
+        self.Gui=nil
+    end
+    self._toggle=nil
 end
 
-end
-
-function UI:Cleanup() if self.Gui then self.Gui:Destroy(); self.Gui=nil end; self._toggle=nil end
 return UI
