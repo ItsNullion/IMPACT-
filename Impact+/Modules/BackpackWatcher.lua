@@ -1,75 +1,98 @@
-local Watcher={}
+local Watcher = {}
+
 function Watcher:Init(Config, CharacterDatabase, MoveDatabase, CursedEnergy)
-    self.Config=Config; self.CharacterDatabase=CharacterDatabase; self.MoveDatabase=MoveDatabase; self.CursedEnergy=CursedEnergy
-    self.Connections={}; self.Started=false
+    self.Config = Config
+    self.CharacterDatabase = CharacterDatabase
+    self.MoveDatabase = MoveDatabase
+    self.CursedEnergy = CursedEnergy
+    self.Connections = {}
+    self.Started = false
 end
+
 function Watcher:_scan()
-    if not self.CursedEnergy then return end
-    local player=game:GetService("Players").LocalPlayer
-    local backpack=player and player:FindFirstChildOfClass("Backpack")
-    local character=player and player.Character
-    if not backpack then return end
-function Database:ResolveFromBackpack(backpack)
+    if not self.CursedEnergy then
+        return
+    end
+
+    local player = game:GetService("Players").LocalPlayer
+    local backpack = player and player:FindFirstChildOfClass("Backpack")
+    local character = player and player.Character
+
     if not backpack then
-        return nil
+        return
     end
 
-    local names = {}
+    local charData = self.CharacterDatabase
+        and self.CharacterDatabase:ResolveFromBackpack(backpack)
 
-    for _, item in ipairs(backpack:GetChildren()) do
-        names[#names + 1] = self:Normalize(item.Name)
+    if charData then
+        self.CursedEnergy:SetCharacterColor(charData.Color)
     end
 
-    local priority = {
-        {"hero hunter: cosmic", "cosmic"},
-        {"hero hunter: monst", "monst", "monster"},
-        {"destructive cyborg", "cyborg"},
-        {"deadly ninja", "ninja"},
-        {"brutal demon", "demon"},
-        {"blade master", "blade"},
-        {"wild psychic", "psychic"},
-        {"martial artist", "martial"},
-        {"tech prodigy", "tech"},
-        {"undying hero", "undying"},
-        {"hero hunter", "hunter"},
-        {"saitama", "strongest", "normal punch"},
-        {"kj", "ravage"},
-        {"sorcerer", "infinity"},
-    }
+    local equipped = character and character:FindFirstChildOfClass("Tool")
+    local item = equipped or backpack:FindFirstChildOfClass("Tool")
+    local move = item
+        and self.MoveDatabase
+        and self.MoveDatabase:Get(item.Name)
 
-    for _, row in ipairs(priority) do
-        local key = self:Normalize(row[1])
-
-        for _, needle in ipairs(row) do
-            needle = self:Normalize(needle)
-
-            for _, itemName in ipairs(names) do
-                if itemName:find(needle, 1, true) then
-                    return self.Characters[key]
-                end
-            end
-        end
-    end
-
-    return nil
+    self.CursedEnergy:SetMoveColor(move and move.Color or nil)
 end
+
 function Watcher:Start()
-    if self.Started or not self.Config.Features.BackpackDetection then return end
-    self.Started=true
-    local player=game:GetService("Players").LocalPlayer
-    local backpack=player:WaitForChild("Backpack")
-    table.insert(self.Connections,backpack.ChildAdded:Connect(function() task.defer(function() self:_scan() end) end))
-    table.insert(self.Connections,backpack.ChildRemoved:Connect(function() task.defer(function() self:_scan() end) end))
-    table.insert(self.Connections,player.CharacterAdded:Connect(function(character)
-        table.insert(self.Connections,character.ChildAdded:Connect(function(child)
-            if child:IsA("Tool") then self:_scan(); self.CursedEnergy:EquipPulse() end
-        end))
-        self:_scan()
-    end))
+    if self.Started or not self.Config.Features.BackpackDetection then
+        return
+    end
+
+    self.Started = true
+
+    local player = game:GetService("Players").LocalPlayer
+    local backpack = player:WaitForChild("Backpack")
+
+    self.Connections[#self.Connections + 1] =
+        backpack.ChildAdded:Connect(function()
+            task.defer(function()
+                self:_scan()
+            end)
+        end)
+
+    self.Connections[#self.Connections + 1] =
+        backpack.ChildRemoved:Connect(function()
+            task.defer(function()
+                self:_scan()
+            end)
+        end)
+
+    self.Connections[#self.Connections + 1] =
+        player.CharacterAdded:Connect(function(character)
+
+            self.Connections[#self.Connections + 1] =
+                character.ChildAdded:Connect(function(child)
+                    if child:IsA("Tool") then
+                        self:_scan()
+                        self.CursedEnergy:EquipPulse()
+                    end
+                end)
+
+            self:_scan()
+        end)
+
     self:_scan()
 end
+
 function Watcher:Cleanup()
-    for i,c in ipairs(self.Connections or {}) do pcall(function() c:Disconnect() end); self.Connections[i]=nil end
-    self.Started=false
+    for i = #self.Connections, 1, -1 do
+        local connection = self.Connections[i]
+
+        if connection then
+            pcall(function()
+                connection:Disconnect()
+            end)
+        end
+
+        self.Connections[i] = nil
+    end
+
+    self.Started = false
 end
+
 return Watcher
