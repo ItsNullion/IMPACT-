@@ -1,4 +1,6 @@
-local l_Table_0 = loadstring(game:HttpGet("https://raw.githubusercontent.com/skibiditoiletfan2007/KOKUSENNN/refs/heads/main/PartCacheTable.lua"))()
+local GEN=(getgenv and getgenv()) or _G
+local l_Table_0 = GEN.__ImpactPartCacheTable
+if not l_Table_0 then error("Impact+ PartCacheTable dependency is missing") end
 local v1 = {};
 v1.__index = v1;
 v1.__type = "PartCache";

@@ -1,4 +1,6 @@
-local PartCache = loadstring(game:HttpGet("https://raw.githubusercontent.com/skibiditoiletfan2007/KOKUSENNN/refs/heads/main/PartCache.lua"))()
+local GEN=(getgenv and getgenv()) or _G
+local PartCache = GEN.__ImpactPartCache
+if not PartCache then error("Impact+ PartCache dependency is missing") end
 local l_clock_0 = os.clock;
 local l_Workspace_0 = game:GetService("Workspace");
 local l_RunService_0 = game:GetService("RunService");
